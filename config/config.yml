@@ -1,0 +1,15 @@
+---
+slack-users:
+  USA3Y6NAY: che
+  U01P7UHM2MV: oh
+commands:
+  postgres: deploy-postgres-service
+  logme: deploy-logme-service
+  mysql: deploy-mysql-service
+  redis: deploy-redis-service
+  harbor: deploy-harbor-service
+  mongodb: deploy-mongodb-service
+  messaging: deploy-rabbitmq-service
+  kubernetes: deploy-kubernetes-service
+  prometheus: deploy-prometheus-service
+  elasticsearch: deploy-elasticsearch-service
