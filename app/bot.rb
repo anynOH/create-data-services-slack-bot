@@ -3,15 +3,17 @@
 require 'json'
 require 'net/http'
 require 'yaml'
+require_relative('bosh_utils')
 require_relative('concourse_utils')
 
 # Slack-Bot logic
 class Bot
-  attr_reader :concourse, :map
+  attr_reader :concourse, :mapping, :config
 
-  def initialize
-    @concourse = ConcourseUtils.new('a9s')
-    @map = YAML.safe_load(File.read([File.dirname(__FILE__), '/../config/config.yml'].join('')))
+  def initialize(config)
+    @mapping = YAML.safe_load(File.read([File.dirname(__FILE__), '/../config/config.yml'].join('')))
+    @config = config
+    @concourse = ConcourseUtils.new(config)
   end
 
   def respond(params, message, type)
@@ -29,35 +31,33 @@ class Bot
       respond(params, "Unknown command: `#{params[:text]}`, try `/help`", 'ephemeral')
     else
       deployment_name = concourse.trigger_and_watch(jobname)
-      rename_service(deployment_name, prefix(params[:user_id]))
+      BoshUtils.rename_service_prefix(deployment_name, prefix(params[:user_id]))
       respond(params, "Service Instance created: #{deployment_name}", 'in_channel')
     end
-  rescue StandardErrorr
-    respond(params, 'Job could not be triggered - please check Concourse for Details', 'ephemeral')
+  rescue StandardError
+    respond(params, "Job could not be triggered - Error: #{StandardError.message}", 'ephemeral')
   end
 
   def debug_slack_response(params)
-    jobname = job_name(params[:text])
+    jobname = params[:text].strip
     if jobname.nil?
       respond(params, "Unknown command: `#{params[:text]}`, try `/help`", 'ephemeral')
     else
-      respond(params, 'Command worked!', 'ephemeral')
+      deployment = concourse.trigger_and_watch(jobname)
+      respond(params, "Command worked! Deployment: #{deployment}", 'in_channel')
     end
   end
 
-  def rename_service(deployment, prefix)
-    puts "Deployment #{deployment} will be prefixed with #{prefix}"
-  end
-
   def job_name(command)
-    map['commands'][command.strip]
+    mapping['commands'][command.strip]
   end
 
   def prefix(user_id)
-    map['slack-users'][user_id]
+    prefix = mapping['slack-users'][user_id]
+    raise 'Could not find user-mapping!' if prefix.nil?
   end
 
   def available_commands
-    map['commands']
+    mapping['commands']
   end
 end

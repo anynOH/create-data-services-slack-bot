@@ -3,7 +3,7 @@ slack-users:
   USA3Y6NAY: che
   U01P7UHM2MV: oh
 commands:
-  postgres: deploy-postgres-service
+  postgres: deploy-postgresql-service
   logme: deploy-logme-service
   mysql: deploy-mysql-service
   redis: deploy-redis-service
