@@ -1,23 +1,23 @@
-# frozen_string_literal: true
-
 require 'sinatra/base'
 require 'net/http'
 require 'json'
+require 'yaml'
 require_relative('bot')
 require_relative('concourse_utils')
 
 # Web-Endpoint to handle Slash Commands
 class Web < Sinatra::Base
-  attr_reader :bot
+  attr_reader :bot, :config
 
   def initialize
     super()
-    @bot = Bot.new
+    @config = YAML.safe_load(File.read('/var/vcap/jobs/slackbot/cfg/config.yml'))
+    @bot = Bot.new(config)
   end
 
   helpers do
     def check_authenticity(request)
-      secret = ENV['SLACK_SECRET']
+      secret = config['slack_secret']
       slack_timestamp = request.env['HTTP_X_SLACK_REQUEST_TIMESTAMP']
       body = request.body.read.to_s
 
@@ -27,7 +27,7 @@ class Web < Sinatra::Base
       signature = OpenSSL::HMAC.hexdigest(digest, secret, auth_string)
 
       "v0=#{signature}" == request.env['HTTP_X_SLACK_SIGNATURE']
-    rescue StandardErrorr
+    rescue StandardError
       false
     end
   end
@@ -38,11 +38,9 @@ class Web < Sinatra::Base
 
   post '/help' do
     if check_authenticity(request)
-      res = 'usage: `create service-name`
-             available commands:
-             '
+      res = "usage: `/create <service-name>`\navailable services:\n"
       bot.available_commands.each do |command|
-        res << "- #{command}\n"
+        res << "- #{command[0]}\n"
       end
       res
     else
