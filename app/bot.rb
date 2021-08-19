@@ -8,12 +8,13 @@ require_relative('concourse_utils')
 
 # Slack-Bot logic
 class Bot
-  attr_reader :concourse, :mapping, :config
+  attr_reader :concourse, :mapping, :config, :slack_users
 
   def initialize(config)
     @mapping = YAML.safe_load(File.read([File.dirname(__FILE__), '/../config/config.yml'].join('')))
     @config = config
     @concourse = ConcourseUtils.new(config)
+    @slack_users = read_users
   end
 
   def respond(params, message, type)
@@ -43,11 +44,23 @@ class Bot
   end
 
   def prefix(user_id)
-    prefix = mapping['slack-users'][user_id]
-    raise StandardError, 'Could not find user-mapping!' if prefix.nil?
+    return slack_users[user_id] unless slack_users[user_id].nil?
+
+    raise StandardError, 'Could not map user-id to prefix!'
   end
 
   def available_commands
     mapping['commands']
+  end
+
+  def read_users
+    values = ENV['SLACK_USERS'].split(',')
+    slack_users = {}
+
+    values.each do |val|
+      pair = val.split(':')
+      slack_users[pair[0]] = pair[1]
+    end
+    slack_users
   end
 end
