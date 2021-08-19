@@ -32,20 +32,10 @@ class Bot
     else
       deployment_name = concourse.trigger_and_watch(jobname)
       BoshUtils.rename_service_prefix(deployment_name, prefix(params[:user_id]))
-      respond(params, "Service Instance created: #{deployment_name}", 'in_channel')
+      respond(params, "Service Instance created: `#{deployment_name}`", 'in_channel')
     end
-  rescue StandardError
-    respond(params, "Job could not be triggered - Error: #{StandardError.message}", 'ephemeral')
-  end
-
-  def debug_slack_response(params)
-    jobname = params[:text].strip
-    if jobname.nil?
-      respond(params, "Unknown command: `#{params[:text]}`, try `/help`", 'ephemeral')
-    else
-      deployment = concourse.trigger_and_watch(jobname)
-      respond(params, "Command worked! Deployment: #{deployment}", 'in_channel')
-    end
+  rescue StandardError => e
+    respond(params, "Job could not be triggered - Error: #{e.message}", 'ephemeral')
   end
 
   def job_name(command)
@@ -54,7 +44,7 @@ class Bot
 
   def prefix(user_id)
     prefix = mapping['slack-users'][user_id]
-    raise 'Could not find user-mapping!' if prefix.nil?
+    raise StandardError, 'Could not find user-mapping!' if prefix.nil?
   end
 
   def available_commands

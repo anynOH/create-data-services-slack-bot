@@ -56,9 +56,4 @@ class Web < Sinatra::Base
       halt 200
     end
   end
-
-  post '/debug' do
-    Thread.new { bot.debug_slack_response(params) }
-    'Debugging currently running'
-  end
 end
