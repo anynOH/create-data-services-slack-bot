@@ -18,12 +18,12 @@ class ConcourseUtils
 
   def fly_login
     out, status = Open3.capture2("fly --target #{fly_target} login --concourse-url #{fly_url} -u #{fly_username} -p #{fly_password}")
-    raise "Login failed! Error: #{out}" unless status.success?
+    raise "Fly login failed! Error: #{out}" unless status.success?
   end
 
   def trigger_and_watch(jobname)
     out, status = Open3.capture2("fly -t #{fly_target} trigger-job --job #{pipeline}/#{jobname} -w")
-    raise 'Job triggered unsuccessfully!' unless status.success?
+    raise 'Job triggered unsuccessfully! Please check Concourse!' unless status.success?
 
     extract_deployment(out)
   end

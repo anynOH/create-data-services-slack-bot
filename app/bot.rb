@@ -32,7 +32,11 @@ class Bot
     BoshUtils.rename_service_prefix(deployment_name, user_prefix)
     respond(params, "Service Instance created: `#{deployment_name}`", 'in_channel')
   rescue StandardError => e
-    respond(params, "Job could not be triggered - Error: #{e.message}", 'ephemeral')
+    if deployment_name.nil?
+      respond(params, e.message, 'ephemeral')
+    else
+      respond(params, "#{e.message} - Service Instance created: `#{deployment_name}`", 'ephemeral')
+    end
   end
 
   def job_name(command)
